@@ -1,13 +1,5 @@
-#include <stddef.h>
-#include <stdint.h>
-#include <limits.h>
+#include "string-util.h"
 
-#define ALIGN (sizeof(size_t))
-#define ONES ((size_t)-1/UCHAR_MAX)                                                                      
-#define HIGHS (ONES * (UCHAR_MAX/2+1))
-#define HASZERO(x) ((x)-ONES & ~(x) & HIGHS)
-
-#define SS (sizeof(size_t))
 void *memset(void *dest, int c, size_t n)
 {
 	unsigned char *s = dest;
@@ -24,7 +16,7 @@ void *memset(void *dest, int c, size_t n)
 void *memcpy(void *dest, const void *src, size_t n)
 {
 	void *ret = dest;
-	
+
 	//Cut rear
 	uint8_t *dst8 = dest;
 	const uint8_t *src8 = src;
@@ -34,7 +26,7 @@ void *memcpy(void *dest, const void *src, size_t n)
 		case 1 : *dst8++ = *src8++;
 		case 0 : ;
 	}
-	
+
 	//stm32 data bus width
 	uint32_t *dst32 = (void *)dst8;
 	const uint32_t *src32 = (void *)src8;
@@ -42,7 +34,7 @@ void *memcpy(void *dest, const void *src, size_t n)
 	while (n--) {
 		*dst32++ = *src32++;
 	}
-	
+
 	return ret;
 }
 
@@ -67,3 +59,13 @@ char *strncpy(char *dest, const char *src, size_t n)
 	while (n-- && (*d++ = *s++));
 	return dest;
 }
+
+size_t strlen(const char *s)
+{
+    size_t len = 0;
+    while(*s++) {
+        len++;
+    }
+    return len;
+}
+
