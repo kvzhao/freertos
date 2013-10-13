@@ -61,7 +61,7 @@ HEADERS= \
 		osdebug.h        \
 		romfs.h          \
 		stm32f10x_conf.h \
-		stm32_p103.h
+		stm32_p103.h \
 
 CFLAGS = \
 		-fno-common -O0 \
@@ -109,6 +109,9 @@ qemu: main.bin $(QEMU_STM32)
 		$(QEMU_SMH_PARAM_SUFFIX)
 
 ifeq ($(BUILD_TYPE), DEBUG)
+CFLAGS  += -gdwarf-2 -g3 -DUNIT_TEST
+SRCS    += unit_test.c
+HEADERS += unit_test.h
 qemudbg: main.bin $(QEMU_STM32)
 	$(QEMU_STM32) -M stm32-p103 -gdb tcp::3333 -S \
 		$(QEMU_SMH_PARAM_SUFFIX) -kernel main.bin \
