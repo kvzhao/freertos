@@ -5,60 +5,53 @@ ARCH=CM3
 VENDOR=ST
 PLAT=STM32F10x
 CODEBASE= freertos
-CMSIS_LIB=$(CODEBASE)/libraries/CMSIS/$(ARCH)
+CMSIS_LIB_DIR=$(CODEBASE)/libraries/CMSIS/$(ARCH)
 STM32_LIB=$(CODEBASE)/libraries/STM32F10x_StdPeriph_Driver
 
-CMSIS_PLAT_SRC = $(CMSIS_LIB)/DeviceSupport/$(VENDOR)/$(PLAT)
+CMSIS_PLAT_SRC_DIR = $(CMSIS_LIB_DIR)/DeviceSupport/$(VENDOR)/$(PLAT)
 
-FREERTOS_SRC = $(CODEBASE)/libraries/FreeRTOS
-FREERTOS_INC = $(FREERTOS_SRC)/include/
-FREERTOS_PORT_INC = $(FREERTOS_SRC)/portable/GCC/ARM_$(ARCH)/
-
-CFLAGS = -fno-common -O0 \
-		 -mcpu=cortex-m3 \
-		 -Wall -std=c99 -pedantic \
-		 -mthumb \
-#CFLAGS_debug = $(CLAGS) -gdwarf-2 -g3
+FREERTOS_SRC_DIR = $(CODEBASE)/libraries/FreeRTOS
+FREERTOS_INC = $(FREERTOS_SRC_DIR)/include/
+FREERTOS_PORT_INC = $(FREERTOS_SRC_DIR)/portable/GCC/ARM_$(ARCH)/
 
 CMSIS_SRCS = \
-		$(CMSIS_LIB)/CoreSupport/core_cm3.c \
-		$(CMSIS_PLAT_SRC)/system_stm32f10x.c \
-		$(CMSIS_PLAT_SRC)/startup/gcc_ride7/startup_stm32f10x_md.s
+		$(CMSIS_LIB_DIR)/CoreSupport/core_cm3.c \
+		$(CMSIS_PLAT_SRC_DIR)/system_stm32f10x.c \
+		$(CMSIS_PLAT_SRC_DIR)/startup/gcc_ride7/startup_stm32f10x_md.s
 
 STM32_SRCS = \
-			 $(STM32_LIB)/src/stm32f10x_rcc.c \
-			 $(STM32_LIB)/src/stm32f10x_gpio.c \
-			 $(STM32_LIB)/src/stm32f10x_usart.c \
-			 $(STM32_LIB)/src/stm32f10x_exti.c \
-			 $(STM32_LIB)/src/misc.c \
+		$(STM32_LIB)/src/stm32f10x_rcc.c \
+		$(STM32_LIB)/src/stm32f10x_gpio.c \
+		$(STM32_LIB)/src/stm32f10x_usart.c \
+		$(STM32_LIB)/src/stm32f10x_exti.c \
+		$(STM32_LIB)/src/misc.c
 
-FREERTOS_SRCS = \
-			$(FREERTOS_SRC)/croutine.c \
-			$(FREERTOS_SRC)/list.c \
-			$(FREERTOS_SRC)/queue.c \
-			$(FREERTOS_SRC)/tasks.c \
-			$(FREERTOS_SRC)/portable/GCC/ARM_CM3/port.c \
-			$(FREERTOS_SRC)/portable/MemMang/heap_1.c \
+FREERTOS_SRC =  \
+		$(FREERTOS_SRC_DIR)/croutine.c \
+		$(FREERTOS_SRC_DIR)/list.c \
+		$(FREERTOS_SRC_DIR)/queue.c \
+		$(FREERTOS_SRC_DIR)/tasks.c \
+		$(FREERTOS_SRC_DIR)/portable/GCC/ARM_CM3/port.c \
+		$(FREERTOS_SRC_DIR)/portable/MemMang/heap_1.c
 
-SRCS = \
-	   $(CMSIS_SRCS) \
-	   $(STM32_SRCS) \
-	   $(FREERTOS_SRCS) \
-		stm32_p103.c \
-		romfs.c \
-		hash-djb2.c \
-		filesystem.c \
-		fio.c \
-		osdebug.c \
-		string-util.c \
-		main.c \
+SRCS= \
+		$(CMSIS_SRCS)   \
+		$(STM32_SRCS)   \
+		$(FREERTOS_SRC) \
+		stm32_p103.c    \
+		romfs.c         \
+		hash-djb2.c     \
+		filesystem.c    \
+		fio.c           \
+		osdebug.c       \
+		string-util.c          \
+		main.c
 
-INCS = \
-		-I.-I$(FREERTOS_INC) \
-		-I$(FREERTOS_PORT_INC) \
+INCS= \
+		-I. -I$(FREERTOS_INC) -I$(FREERTOS_PORT_INC) \
 		-I$(CODEBASE)/libraries/CMSIS/CM3/CoreSupport \
 		-I$(CODEBASE)/libraries/CMSIS/CM3/DeviceSupport/ST/STM32F10x \
-		-I$(CODEBASE)/libraries/STM32F10x_StdPeriph_Driver/inc \
+		-I$(CODEBASE)/libraries/STM32F10x_StdPeriph_Driver/inc
 
 HEADERS= \
 		filesystem.h     \
@@ -68,11 +61,24 @@ HEADERS= \
 		osdebug.h        \
 		romfs.h          \
 		stm32f10x_conf.h \
-		stm32_p103.h     \
+		stm32_p103.h
 
-SRC_STRIP_PATH = $(notdir $(SRCS))
-COBJS = $( patsubst $.c,%.o,$(SRC_STRIP_PATH))
-OBJS  = $( patsubst %.s,$.o,$(COBJS) )
+CFLAGS = \
+		-fno-common -O0 \
+		-mcpu=cortex-m3 -mthumb \
+		-Wall -std=c99 -pedantic \
+		-fno-builtin-printf
+
+# Options and actions
+BUILD_TYPE    ?= DEBUG
+USE_UNIT_TEST ?= NO
+USE_SEMIHOST  ?= YES
+
+# Trick to get obj file name
+# Filter out path -> Renname *.c to *.o -> Rename *.s to *.o
+SRC_STRIP_PATH=$(notdir $(SRCS))
+C_OBJS=$(patsubst %.c,%.o,$(SRC_STRIP_PATH))
+OBJS=$(patsubst %.s,%.o,$(C_OBJS))
 
 all: main.bin
 
@@ -98,15 +104,16 @@ test-romfs.o: mkromfs
 
 
 qemu: main.bin $(QEMU_STM32)
-	$(QEMU_STM32) -M stm32-p103 -kernel main.bin
+	$(QEMU_STM32) -M stm32-p103 -kernel main.bin  \
+		-monitor tcp:localhost:4444,server,nowait \
+		$(QEMU_SMH_PARAM_SUFFIX)
 
+ifeq ($(BUILD_TYPE), DEBUG)
 qemudbg: main.bin $(QEMU_STM32)
-	$(QEMU_STM32) -M stm32-p103 \
-		-gdb tcp::3333 -S \
-		-kernel main.bin
-		
-qemuauto: main.bin $(QEMU_STM32)
-	bash emulate.sh main.bin
+	$(QEMU_STM32) -M stm32-p103 -gdb tcp::3333 -S \
+		$(QEMU_SMH_PARAM_SUFFIX) -kernel main.bin \
+		-monitor tcp:localhost:4444,server,nowait
+endif
 
 clean:
 	rm -f *.o *.elf *.bin *.list mkromfs
