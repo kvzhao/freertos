@@ -73,7 +73,8 @@ CFLAGS = \
 		-fno-common -O0 \
 		-mcpu=cortex-m3 -mthumb \
 		-Wall -std=c99 -pedantic \
-		-fno-builtin-printf
+		-fno-builtin-printf \
+		-ffreestanding
 
 
 # Trick to get obj file name
