@@ -1,6 +1,11 @@
 CROSS_COMPILE=arm-none-eabi-
 QEMU_STM32 ?= ../qemu_stm32/arm-softmmu/qemu-system-arm
 
+# Options and actions for makefile
+BUILD_TYPE    ?= DEBUG
+USE_UNIT_TEST ?= YES
+USE_SEMIHOST  ?= YES
+
 ARCH=CM3
 VENDOR=ST
 PLAT=STM32F10x
@@ -70,10 +75,6 @@ CFLAGS = \
 		-Wall -std=c99 -pedantic \
 		-fno-builtin-printf
 
-# Options and actions
-BUILD_TYPE    ?= DEBUG
-USE_UNIT_TEST ?= NO
-USE_SEMIHOST  ?= YES
 
 # Trick to get obj file name
 # Filter out path -> Renname *.c to *.o -> Rename *.s to *.o
@@ -105,21 +106,25 @@ test-romfs.o: mkromfs
 
 
 qemu: main.bin $(QEMU_STM32)
-	$(QEMU_STM32) -M stm32-p103 -kernel main.bin  \
-		-nographic \
-		-monitor tcp:localhost:4444,server,nowait \
-		$(QEMU_SMH_PARAM_SUFFIX)
+	$(QEMU_STM32) -M stm32-p103 -kernel main.bin
 
 ifeq ($(BUILD_TYPE), DEBUG)
-CFLAGS  += -gdwarf-2 -g3 -DUNIT_TEST
-SRCS    += unit_test.c
-HEADERS += unit_test.h
+    CFLAGS  += -gdwarf-2 -g3
+    ifeq ($(USE_UNIT_TEST),YES)
+        CFLAGS  += -DUNIT_TEST
+        SRCS    += unit_test.c
+        HEADERS += unit_test.h
+    endif
+endif
+
+ifeq ($(BUILD_TYPE), DEBUG)
 qemudbg: main.bin $(QEMU_STM32)
 	$(QEMU_STM32) -M stm32-p103 -gdb tcp::3333 -S \
 		-nographic \
 		$(QEMU_SMH_PARAM_SUFFIX) -kernel main.bin \
 		-monitor tcp:localhost:4444,server,nowait
 endif
+
 
 clean:
 	rm -f *.o *.elf *.bin *.list mkromfs
