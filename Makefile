@@ -62,6 +62,7 @@ HEADERS= \
 		romfs.h          \
 		stm32f10x_conf.h \
 		stm32_p103.h \
+		string-util.h \
 
 CFLAGS = \
 		-fno-common -O0 \
@@ -105,6 +106,7 @@ test-romfs.o: mkromfs
 
 qemu: main.bin $(QEMU_STM32)
 	$(QEMU_STM32) -M stm32-p103 -kernel main.bin  \
+		-nographic \
 		-monitor tcp:localhost:4444,server,nowait \
 		$(QEMU_SMH_PARAM_SUFFIX)
 
@@ -114,6 +116,7 @@ SRCS    += unit_test.c
 HEADERS += unit_test.h
 qemudbg: main.bin $(QEMU_STM32)
 	$(QEMU_STM32) -M stm32-p103 -gdb tcp::3333 -S \
+		-nographic \
 		$(QEMU_SMH_PARAM_SUFFIX) -kernel main.bin \
 		-monitor tcp:localhost:4444,server,nowait
 endif
