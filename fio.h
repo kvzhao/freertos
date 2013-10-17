@@ -5,7 +5,7 @@
 
 enum open_types_t {
     O_RDONLY = 0,
-    O_WRONLY = 1,                                                               
+    O_WRONLY = 1,
     O_RDWR = 2,
     O_CREAT = 4,
     O_TRUNC = 8,
@@ -40,5 +40,7 @@ int fio_close(int fd);
 void fio_set_opaque(int fd, void * opaque);
 
 void register_devfs();
+
+int puts (const char *msg) ;
 
 #endif
