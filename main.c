@@ -6,11 +6,16 @@
 #include "task.h"
 #include "queue.h"
 #include "semphr.h"
-#include <string.h>
+//#include <string.h>
 
 /* Filesystem includes */
 #include "filesystem.h"
 #include "fio.h"
+/* String Processing */
+#include "string.h"
+#include "util.h"
+/* Shell commands */
+#include "shell.h"
 
 
 /* Debug : Unit Testing */
@@ -23,6 +28,7 @@ extern const char _sromfs;
 static void setup_hardware();
 
 volatile xSemaphoreHandle serial_tx_wait_sem = NULL;
+volatile xQueueHandle serial_rx_queue = NULL;
 
 
 /* IRQ handler to handle USART2 interruptss (both transmit and receive
@@ -53,7 +59,16 @@ void USART2_IRQHandler()
 		taskYIELD();
 	}
 }
+typedef struct {
+	char ch;
+} serial_ch_msg;
 
+void receive_byte(char ch)
+{
+	serial_ch_msg msg;
+	while (!xQueueReceive(serial_rx_queue, &msg, portMAX_DELAY));
+	return msg.ch;
+}
 void send_byte(char ch)
 {
 	/* Wait until the RS232 port can receive another byte (this semaphore
@@ -99,20 +114,23 @@ int main()
 	/* Create the queue used by the serial task.  Messages for write to
 	 * the RS232. */
 	vSemaphoreCreateBinary(serial_tx_wait_sem);
-
-	/* Create a task to output text read from romfs. */
-	xTaskCreate(read_romfs_task,
-	            (signed portCHAR *) "Read romfs",
-	            512 /* stack size */, NULL, tskIDLE_PRIORITY + 2, NULL);
+	serial_rx_queue = xQueueCreate(1, sizeof(serial_ch_msg));
 
 #ifdef UNIT_TEST
     xTaskCreate(unit_test_task,
                 (signed portCHAR *) "Unit Test",
                 256, // stack size
                 NULL,
-                tskIDLE_PRIORITY +3,
+                tskIDLE_PRIORITY + 2,
                 NULL);
 #endif
+
+    xTaskCreate(shell_task,
+                (signed portCHAR*) "Shell",
+                512, /* Stack Size*/
+                NULL,
+                tskIDLE_PRIORITY + 1,
+                NULL);
 
 	/* Start running the tasks. */
 	vTaskStartScheduler();
