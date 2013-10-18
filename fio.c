@@ -221,7 +221,7 @@ static int _printf(str_func_t proc_str, char* dest, const char* str, va_list par
             param_chr[0]  = str[curr_char - 1];
             str_to_output = param_chr;
         }
-        /* % case-> retrive latter params */
+        /* % case-> retrieve latter params */
         else {
             switch (str[curr_char]) {
                 case 'S':
@@ -254,9 +254,9 @@ static int _printf(str_func_t proc_str, char* dest, const char* str, va_list par
                     }
             } /* switch (fmt_str[curr_char])      */
             curr_char++;
-        }     /* if (fmt_str[curr_char++] == '%') */
+        }     /* if (str[curr_char++] == '%') */
         proc_str(dest, str_to_output);
-    }         /* while (fmt_str[curr_char])       */
+    }         /* while (str[curr_char])       */
 
     return curr_char;
 }
