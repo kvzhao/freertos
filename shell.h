@@ -1,8 +1,8 @@
-#ifdef __SHELL_H__
+#ifndef __SHELL_H__
 #define __SHELL_H__
 
 #define CMD_BUF_SIZE 32
-#define CMD_AMOUNT 4
+// #define CMD_AMOUNT 4
 
 /* Enumeration of command types */
 typedef enum {
@@ -24,5 +24,7 @@ typedef struct {
     const char *des;    /* Command Description showed when help called */
     cmd_func_t handler; /* Command function handler */
 } cmd_t;
+
+void shell_task( void *pvParameters );
 
 #endif
