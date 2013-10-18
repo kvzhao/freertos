@@ -49,7 +49,8 @@ SRCS= \
 		filesystem.c    \
 		fio.c           \
 		osdebug.c       \
-		string-util.c          \
+		string.c          \
+		util.c \
 		main.c
 
 INCS= \
@@ -67,7 +68,8 @@ HEADERS= \
 		romfs.h          \
 		stm32f10x_conf.h \
 		stm32_p103.h \
-		string-util.h \
+		string.h \
+		util.h
 
 CFLAGS = \
 		-fno-common -O0 \

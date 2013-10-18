@@ -2,10 +2,13 @@
 #include <FreeRTOS.h>
 #include <semphr.h>
 #include <unistd.h>
+#include <stdarg.h> /* for variable list */
 #include "fio.h"
 #include "filesystem.h"
 #include "osdebug.h"
 #include "hash-djb2.h"
+#include "string.h"
+#include "util.h"
 
 static struct fddef_t fio_fds[MAX_FDS];
 
@@ -188,4 +191,84 @@ int puts( const char *msg)
 {
     if (!msg) return -1;
     return fio_write(1, msg, strlen(msg));
+}
+
+
+static int printf_callback(char *dest, const char* src) { return puts(src); }
+typedef int (*str_func_t)(char*, const char*);
+
+static int _printf(str_func_t proc_str, char* dest, const char* str, va_list param)
+{
+    char  param_chr[] = {0, 0};
+    int   param_int = 0;
+
+    long int param_lint = 0;
+
+    char *str_to_output = 0;
+    int   curr_char  = 0;
+
+    /* Make sure strlen(dest) is 0
+     * for first strcat */
+    if (dest) {
+        dest[0] = 0;
+    }
+
+    /* Let's parse the string */
+    while (str[curr_char]) {
+        /* Deal with normal string
+         * increase index by 1 here  */
+        if (str[curr_char++] != '%') {
+            param_chr[0]  = str[curr_char - 1];
+            str_to_output = param_chr;
+        }
+        /* % case-> retrive latter params */
+        else {
+            switch (str[curr_char]) {
+                case 'S':
+                case 's':
+                    {
+                        str_to_output = va_arg(param, char *);
+                    }
+                    break;
+
+                case 'd':
+                case 'D':
+                    {
+                       param_int     = va_arg(param, int);
+                       str_to_output = itoa(param_int);
+                    }
+                    break;
+
+                case 'c':
+                case 'C':
+                    {
+                        param_chr[0]  = (char) va_arg(param, int);
+                        str_to_output = param_chr;
+                        break;
+                    }
+
+                default:
+                    {
+                        param_chr[0]  = str[curr_char];
+                        str_to_output = param_chr;
+                    }
+            } /* switch (fmt_str[curr_char])      */
+            curr_char++;
+        }     /* if (fmt_str[curr_char++] == '%') */
+        proc_str(dest, str_to_output);
+    }         /* while (fmt_str[curr_char])       */
+
+    return curr_char;
+}
+
+int printf (const char* format, ...)
+{
+   va_list arg;
+   int done;
+
+   va_start (arg, format);
+   done = _printf (printf_callback,(char *)0, format , arg);
+   va_end (arg);
+
+   return done;
 }
