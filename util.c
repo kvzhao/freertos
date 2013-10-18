@@ -26,9 +26,15 @@ static char* itoa_base(int val, int base)
         buf[i] = '-';
         return &buf[i];
     }
+    return &buf[i+1];
 }
 
 char *itoa(int val)
 {
     return itoa_base(val,10);
+}
+
+char *htoa(int val)
+{
+    return itoa_base(val,16);
 }
